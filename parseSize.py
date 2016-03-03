@@ -34,7 +34,7 @@ for line in fi.readlines():
     path = path.replace("/pnfs/lcg.cscs.ch/cms/trivcat/store/", "/")
     if len(path) == 1:
         continue
-    if len(path.split("/")) > 4:
+    if len(path.split("/")) > 6:
         continue
     insert_to_dict(path, size, imtime, iatime)
 

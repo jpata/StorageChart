@@ -28,15 +28,21 @@ var svg = d3.select("body").append("svg")
     .attr("transform", "translate(" + width / 2 + "," + height * .52 + ")");
 
 var partition = d3.layout.partition()
-    .sort(null)
-    .size([2 * Math.PI, radius * radius])
+    //.sort(null)
+    //.size([2 * Math.PI, radius * radius])
     .value(function(d) { return d.size; });
 
+// var arc = d3.svg.arc()
+//     .startAngle(function(d) { return d.x; })
+//     .endAngle(function(d) { return d.x + d.dx; })
+//     .innerRadius(function(d) { return Math.sqrt(d.y); })
+//     .outerRadius(function(d) { return Math.sqrt(d.y + d.dy); });
+
 var arc = d3.svg.arc()
-    .startAngle(function(d) { return d.x; })
-    .endAngle(function(d) { return d.x + d.dx; })
-    .innerRadius(function(d) { return Math.sqrt(d.y); })
-    .outerRadius(function(d) { return Math.sqrt(d.y + d.dy); });
+    .startAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x))); })
+    .endAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x + d.dx))); })
+    .innerRadius(function(d) { return Math.max(0, y(d.y)); })
+    .outerRadius(function(d) { return Math.max(0, y(d.y + d.dy)); });
 
 var x = d3.scale.linear()
             .range([0, 2 * Math.PI]);
@@ -62,7 +68,7 @@ d3.json("t2.json", function(error, root) {
   if (error) throw error;
   node = root;
   var path = svg.datum(root).selectAll("path")
-      .data(partition.nodes)
+      .data(partition.nodes(root))
       .enter().append("path")
       //.attr("display", function(d) { return null; }) // hide inner ring
       .attr("d", arc)
@@ -82,12 +88,12 @@ d3.json("t2.json", function(error, root) {
     //       .duration(500)
     //       .style("opacity", 0);
     //       })
-      .on("click", click)
+      .on("click", click);
     //   .on("contextmenu", function (d, i) {
     //         d3.event.preventDefault();
     //         div2.html("<br>" + getAncestors(d));
     //    })
-      .each(stash);
+    //  .each(stash);
 
  // d3.selectAll("input").on("change", function change() {
  //    var value = this.value === "count"
@@ -101,9 +107,19 @@ d3.json("t2.json", function(error, root) {
  //        .attrTween("d", arcTweenData);
  //  });
 
-  function click(d) {
+    function click(d) {
     console.log(getAncestors(d) + " Size: " + d.size + " TB  " + " imtime="  + d.imtime + " iatime=" + d.iatime);
-  };
+      svg.transition()
+          .duration(0)
+          .tween("scale", function() {
+            var xd = d3.interpolate(x.domain(), [d.x, d.x + d.dx]),
+                yd = d3.interpolate(y.domain(), [d.y, 1]),
+                yr = d3.interpolate(y.range(), [d.y ? 20 : 0, radius]);
+            return function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); };
+          })
+        .selectAll("path")
+          .attrTween("d", function(d) { return function() { return arc(d); }; });
+    }
 });
 
 d3.select(self.frameElement).style("height", height + "px");
