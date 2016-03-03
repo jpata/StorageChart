@@ -1,7 +1,9 @@
+#!/usr/bin/env python
+
 import sys, json, os
 
 
-os.system("curl -k http://ganglia.lcg.cscs.ch/ganglia/files_cms.html > files_cms.html")
+os.system("/usr/bin/curl -k http://ganglia.lcg.cscs.ch/ganglia/files_cms.html > files_cms.html")
 fi = open("files_cms.html")
 
 ndict = {}
